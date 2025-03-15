@@ -1,9 +1,9 @@
 'use client';
 
 import { ArrowDownIcon, ArrowUpIcon } from '@heroicons/react/20/solid';
-import { cn } from '@/src/lib/utils';
+import { cn } from '@/lib/utils';
 import { SalesOverview } from '@/src/components/dashboard/SalesOverview';
-import { RecentOrders } from '@/src/components/dashboard/RecentOrders';
+import { SimpleRecentOrders } from '@/src/components/dashboard/SimpleRecentOrders';
 
 const stats = [
   {
@@ -93,7 +93,7 @@ export default function DashboardPage() {
             <h3 className="text-base font-semibold leading-6 text-gray-900">
               Recent Orders
             </h3>
-            <RecentOrders />
+            <SimpleRecentOrders />
           </div>
         </div>
       </div>

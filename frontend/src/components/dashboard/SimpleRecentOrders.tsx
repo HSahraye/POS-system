@@ -1,14 +1,6 @@
 'use client';
 
-// Remove date-fns import and use a simple date formatter
-// import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-
-// Simple date formatter function
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString();
-};
 
 const orders = [
   {
@@ -17,7 +9,7 @@ const orders = [
     items: 3,
     total: '$156.00',
     status: 'completed',
-    date: new Date('2024-03-15T09:24:00'),
+    date: '2024-03-15',
   },
   {
     id: 2,
@@ -25,7 +17,7 @@ const orders = [
     items: 2,
     total: '$89.99',
     status: 'pending',
-    date: new Date('2024-03-15T10:15:00'),
+    date: '2024-03-15',
   },
   {
     id: 3,
@@ -33,7 +25,7 @@ const orders = [
     items: 1,
     total: '$45.50',
     status: 'processing',
-    date: new Date('2024-03-15T11:05:00'),
+    date: '2024-03-15',
   },
   {
     id: 4,
@@ -41,7 +33,7 @@ const orders = [
     items: 4,
     total: '$234.00',
     status: 'completed',
-    date: new Date('2024-03-15T11:30:00'),
+    date: '2024-03-15',
   },
   {
     id: 5,
@@ -49,7 +41,7 @@ const orders = [
     items: 2,
     total: '$78.50',
     status: 'pending',
-    date: new Date('2024-03-15T12:00:00'),
+    date: '2024-03-15',
   },
 ];
 
@@ -60,7 +52,7 @@ const statusStyles = {
   failed: 'bg-red-100 text-red-800',
 };
 
-export function RecentOrders() {
+export function SimpleRecentOrders() {
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-300">
@@ -130,7 +122,7 @@ export function RecentOrders() {
                 </span>
               </td>
               <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                {formatDate(order.date.toISOString())}
+                {order.date}
               </td>
             </tr>
           ))}

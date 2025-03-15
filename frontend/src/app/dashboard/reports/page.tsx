@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { format, subDays } from 'date-fns';
+// Replace date-fns with simple date functions
+// import { format, subDays } from 'date-fns';
+import { cn } from '@/lib/utils';
 import {
   LineChart,
   Line,
@@ -33,10 +35,23 @@ interface InventoryItem {
   lowStockAlert: boolean;
 }
 
+// Simple date formatter function
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString();
+};
+
+// Function to subtract days from a date
+const subDays = (date: Date, days: number) => {
+  const result = new Date(date);
+  result.setDate(result.getDate() - days);
+  return result;
+};
+
 export default function ReportsPage() {
   const [dateRange, setDateRange] = useState({
-    startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
-    endDate: format(new Date(), 'yyyy-MM-dd')
+    startDate: formatDate(subDays(new Date(), 30).toISOString()),
+    endDate: formatDate(new Date().toISOString())
   });
   const [salesReport, setSalesReport] = useState<Report | null>(null);
   const [inventoryReport, setInventoryReport] = useState<InventoryItem[] | null>(null);

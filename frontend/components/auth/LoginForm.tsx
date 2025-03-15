@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
@@ -57,15 +57,27 @@ export default function LoginForm() {
     setIsLoading(true);
 
     try {
+      console.log('Attempting to login with:', formData);
+      
       const response = await fetch('http://localhost:5001/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify(formData),
       });
 
-      const data = await response.json();
+      console.log('Login response status:', response.status);
+      
+      let data;
+      try {
+        data = await response.json();
+        console.log('Login response data:', data);
+      } catch (jsonError) {
+        console.error('Error parsing JSON response:', jsonError);
+        throw new Error('Failed to parse server response');
+      }
 
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
@@ -80,8 +92,8 @@ export default function LoginForm() {
       // Redirect to dashboard
       router.push('/dashboard');
     } catch (error: any) {
-      console.error('Login error:', error);
-      toast.error(error.message || 'Login failed');
+      console.error('Login error details:', error);
+      toast.error(error.message || 'Login failed. Please check your network connection and try again.');
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,13 @@
 'use client';
 
-import { format } from 'date-fns';
+// import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+
+// Simple date formatter function
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString();
+};
 
 const orders = [
   {
@@ -47,7 +54,7 @@ export default function RecentOrders() {
                     {order.customer}
                   </p>
                   <p className="text-sm text-gray-500">
-                    {format(order.date, 'MMM d, h:mm a')}
+                    {formatDate(order.date.toISOString())}
                   </p>
                 </div>
                 <div className="flex-shrink-0 text-right">

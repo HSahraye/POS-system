@@ -28,7 +28,7 @@ export default function BarcodeScanner({ onScan, onError }: BarcodeScannerProps)
   return (
     <div className="relative">
       <video
-        ref={ref}
+        ref={ref as React.RefObject<HTMLVideoElement>}
         className="w-full max-w-md mx-auto rounded-lg shadow-lg"
       />
       {!isScanning && (

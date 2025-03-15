@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { format } from 'date-fns';
+import Link from 'next/link';
+// import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface Order {
   id: string;
@@ -14,6 +16,12 @@ interface Order {
   status: string;
   createdAt: string;
 }
+
+// Simple date formatter function
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString();
+};
 
 export default function OrdersPage() {
   const router = useRouter();
@@ -159,7 +167,7 @@ export default function OrdersPage() {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {format(new Date(order.createdAt), 'MMM d, yyyy h:mm a')}
+                  {formatDate(order.createdAt)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button

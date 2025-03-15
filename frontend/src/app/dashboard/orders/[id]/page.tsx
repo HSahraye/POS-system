@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import StripePayment from '../../../../components/StripePayment';
 
 interface OrderItem {
@@ -51,6 +51,12 @@ interface Order {
   status: string;
   createdAt: string;
 }
+
+// Simple date formatter function
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString();
+};
 
 export default function OrderDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -202,7 +208,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
               <div>
                 <h2 className="text-lg font-medium text-gray-900">Order Status</h2>
                 <p className="text-sm text-gray-500">
-                  Created on {format(new Date(order.createdAt), 'MMM d, yyyy h:mm a')}
+                  Created on {formatDate(order.createdAt)}
                 </p>
               </div>
               <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
@@ -325,7 +331,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
                           {payment.paymentMethod.replace('_', ' ')}
                         </p>
                         <p className="text-xs text-gray-400">
-                          {format(new Date(payment.createdAt), 'MMM d, yyyy h:mm a')}
+                          {formatDate(payment.createdAt)}
                         </p>
                       </div>
                       <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(payment.status)}`}>
