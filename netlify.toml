@@ -1,21 +1,10 @@
 [build]
-  command = "cd frontend && npm install && npm run build"
-  publish = "frontend/.next"
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF ./frontend/"
+  command = "cd frontend && npm install && npm run export"
+  publish = "frontend/out"
 
 [build.environment]
   NODE_VERSION = "18"
-  NEXT_USE_NETLIFY_EDGE = "true"
-  NEXT_TELEMETRY_DISABLED = "1"
   NPM_FLAGS = "--legacy-peer-deps"
-  CI = "true"
-
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
-  [plugins.inputs]
-    # Skip generating SSG pages when configured for static export
-    generateStaticPages = false
-    skipBuildRequests = true
 
 [[headers]]
   for = "/*"
