@@ -5,6 +5,17 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import ChartComponent from '../components/ChartComponent';
 
+// Add generateStaticParams for static export
+export function generateStaticParams() {
+  // Pre-render these report types at build time
+  return [
+    { type: 'sales' },
+    { type: 'products' },
+    { type: 'customers' },
+    { type: 'inventory' }
+  ];
+}
+
 // Reuse the data generation functions from the main reports page
 const generateSalesData = (startDate: Date, endDate: Date) => {
   const data = [];
