@@ -7,6 +7,7 @@ import {
   BellIcon,
   CalendarIcon,
   ChartPieIcon,
+  ChartBarIcon,
   Cog6ToothIcon,
   DocumentDuplicateIcon,
   FolderIcon,
@@ -14,6 +15,7 @@ import {
   UserIcon,
   UsersIcon,
   XMarkIcon,
+  ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 import {
   ChevronDownIcon,
@@ -21,8 +23,9 @@ import {
 } from '@heroicons/react/20/solid';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import SignOutButton from '@/components/auth/SignOutButton';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
@@ -30,12 +33,14 @@ const navigation = [
   { name: 'Products', href: '/dashboard/products', icon: FolderIcon },
   { name: 'Customers', href: '/dashboard/customers', icon: UsersIcon },
   { name: 'Reports', href: '/dashboard/reports', icon: ChartPieIcon },
+  { name: 'Analytics', href: '/dashboard/analytics', icon: ChartBarIcon },
   { name: 'Calendar', href: '/dashboard/calendar', icon: CalendarIcon },
 ];
 
 const userNavigation = [
-  { name: 'Your profile', href: '#' },
-  { name: 'Settings', href: '#' },
+  { name: 'Your profile', href: '/dashboard/profile' },
+  { name: 'Settings', href: '/dashboard/settings' },
+  { name: 'Help & Support', href: '/dashboard/help' },
   { name: 'Sign out', href: '#' },
 ];
 
@@ -46,6 +51,7 @@ export default function DashboardLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   return (
     <div>
@@ -154,6 +160,9 @@ export default function DashboardLayout({
                           Settings
                         </Link>
                       </li>
+                      <li>
+                        <SignOutButton />
+                      </li>
                     </ul>
                   </nav>
                 </div>
@@ -216,6 +225,9 @@ export default function DashboardLayout({
                   />
                   Settings
                 </Link>
+              </li>
+              <li>
+                <SignOutButton />
               </li>
             </ul>
           </nav>
@@ -305,15 +317,27 @@ export default function DashboardLayout({
                     {userNavigation.map((item) => (
                       <Menu.Item key={item.name}>
                         {({ active }) => (
-                          <a
-                            href={item.href}
-                            className={cn(
-                              active ? 'bg-gray-50' : '',
-                              'block px-3 py-1 text-sm leading-6 text-gray-900'
-                            )}
-                          >
-                            {item.name}
-                          </a>
+                          item.name === 'Sign out' ? (
+                            <SignOutButton 
+                              className={cn(
+                                active ? 'bg-gray-50' : '',
+                                'block w-full text-left px-3 py-1 text-sm leading-6 text-gray-900'
+                              )}
+                              showIcon={false}
+                            >
+                              {item.name}
+                            </SignOutButton>
+                          ) : (
+                            <a
+                              href={item.href}
+                              className={cn(
+                                active ? 'bg-gray-50' : '',
+                                'block px-3 py-1 text-sm leading-6 text-gray-900'
+                              )}
+                            >
+                              {item.name}
+                            </a>
+                          )
                         )}
                       </Menu.Item>
                     ))}
