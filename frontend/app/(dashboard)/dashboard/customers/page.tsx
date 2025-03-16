@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import { mockCustomers, Customer, formatCurrency, formatDate } from '../mockData';
+import { ResponsiveTable } from '@/components/ui/ResponsiveTable';
 
 // Extend the Customer type to allow null lastOrder
 type CustomerWithNullableLastOrder = Omit<Customer, 'lastOrder'> & {
@@ -133,8 +134,86 @@ export default function CustomersPage() {
     }
   };
 
+  // Table column configuration for the responsive table
+  const columns = [
+    {
+      key: 'name',
+      title: 'Customer',
+      render: (value: string, record: CustomerWithNullableLastOrder) => (
+        <div className="flex items-center">
+          <div className="h-10 w-10 flex-shrink-0">
+            <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+              <span className="text-lg font-medium text-gray-600">
+                {value.charAt(0)}
+              </span>
+            </div>
+          </div>
+          <div className="ml-4">
+            <div className="text-sm font-medium text-gray-900">{value}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'email',
+      title: 'Contact',
+      render: (value: string, record: CustomerWithNullableLastOrder) => (
+        <div>
+          <div className="text-sm text-gray-900">{value}</div>
+          <div className="text-sm text-gray-500">{record.phone}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'orders',
+      title: 'Orders',
+    },
+    {
+      key: 'totalSpent',
+      title: 'Total Spent',
+      render: (value: number) => formatCurrency(value),
+    },
+    {
+      key: 'lastOrder',
+      title: 'Last Order',
+      render: (value: string | null) => (value ? formatDate(value) : 'Never'),
+    },
+    {
+      key: 'status',
+      title: 'Status',
+      render: (value: string) => (
+        <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${getStatusBadgeColor(value)}`}>
+          {value}
+        </span>
+      ),
+    },
+  ];
+
+  // Customer actions for the responsive table
+  const renderActions = (record: CustomerWithNullableLastOrder) => (
+    <>
+      <button
+        onClick={() => {
+          setCurrentCustomer(record);
+          setShowEditModal(true);
+        }}
+        className="mr-3 text-primary-600 hover:text-primary-900"
+      >
+        <PencilIcon className="h-5 w-5" aria-hidden="true" />
+        <span className="sr-only">Edit</span>
+      </button>
+      <button
+        onClick={() => handleDeleteCustomer(record.id)}
+        className="text-red-600 hover:text-red-900"
+      >
+        <TrashIcon className="h-5 w-5" aria-hidden="true" />
+        <span className="sr-only">Delete</span>
+      </button>
+    </>
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6">
       <div className="sm:flex sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Customers</h1>
@@ -154,7 +233,7 @@ export default function CustomersPage() {
       </div>
 
       {/* Search */}
-      <div className="relative">
+      <div className="relative max-w-md w-full">
         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
           <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
         </div>
@@ -169,192 +248,88 @@ export default function CustomersPage() {
         />
       </div>
 
-      {/* Customers Table */}
-      <div className="overflow-hidden rounded-lg border border-gray-200 shadow">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Customer
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Contact
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Orders
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Total Spent
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Last Order
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Status
-              </th>
-              <th scope="col" className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
-            {filteredCustomers.length > 0 ? (
-              filteredCustomers.map((customer) => (
-                <tr key={customer.id} className="hover:bg-gray-50">
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 flex-shrink-0">
-                        <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                          <span className="text-lg font-medium text-gray-600">
-                            {customer.name.charAt(0)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{customer.name}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="text-sm text-gray-900">{customer.email}</div>
-                    <div className="text-sm text-gray-500">{customer.phone}</div>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                    {customer.orders}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                    {formatCurrency(customer.totalSpent)}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                    {customer.lastOrder ? formatDate(customer.lastOrder) : 'Never'}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${getStatusBadgeColor(customer.status)}`}>
-                      {customer.status}
-                    </span>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                    <button
-                      onClick={() => {
-                        setCurrentCustomer(customer);
-                        setShowEditModal(true);
-                      }}
-                      className="mr-3 text-primary-600 hover:text-primary-900"
-                    >
-                      <PencilIcon className="h-5 w-5" aria-hidden="true" />
-                      <span className="sr-only">Edit</span>
-                    </button>
-                    <button
-                      onClick={() => handleDeleteCustomer(customer.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <TrashIcon className="h-5 w-5" aria-hidden="true" />
-                      <span className="sr-only">Delete</span>
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
-                  No customers found. {searchTerm ? 'Try a different search term.' : 'Add your first customer!'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      {/* Customers Table - Responsive */}
+      <div className="mt-6 overflow-hidden rounded-lg border border-gray-200 shadow">
+        <ResponsiveTable 
+          columns={columns}
+          data={filteredCustomers}
+          keyField="id"
+          actions={renderActions}
+        />
       </div>
 
       {/* Add Customer Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-10 overflow-y-auto">
           <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-            </div>
-
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={() => setShowAddModal(false)} />
             <span className="hidden sm:inline-block sm:h-screen sm:align-middle" aria-hidden="true">&#8203;</span>
-
-            <div className="inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div className="sm:flex sm:items-start">
-                  <div className="mt-3 w-full text-center sm:mt-0 sm:text-left">
-                    <h3 className="text-lg font-medium leading-6 text-gray-900">
-                      Add New Customer
-                    </h3>
-                    <div className="mt-4 space-y-4">
-                      <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                          Name*
-                        </label>
-                        <input
-                          type="text"
-                          name="name"
-                          id="name"
-                          value={newCustomer.name}
-                          onChange={handleNewCustomerChange}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                          Email*
-                        </label>
-                        <input
-                          type="email"
-                          name="email"
-                          id="email"
-                          value={newCustomer.email}
-                          onChange={handleNewCustomerChange}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                          Phone
-                        </label>
-                        <input
-                          type="tel"
-                          name="phone"
-                          id="phone"
-                          value={newCustomer.phone}
-                          onChange={handleNewCustomerChange}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-                          Status
-                        </label>
-                        <select
-                          name="status"
-                          id="status"
-                          value={newCustomer.status}
-                          onChange={handleNewCustomerChange}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                        >
-                          <option value="active">Active</option>
-                          <option value="inactive">Inactive</option>
-                        </select>
-                      </div>
-                    </div>
+            <div className="inline-block transform overflow-hidden rounded-lg bg-white px-4 pt-5 pb-4 text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6 sm:align-middle">
+              <div>
+                <h3 className="text-lg font-medium leading-6 text-gray-900">Add New Customer</h3>
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      name="name"
+                      id="name"
+                      value={newCustomer.name}
+                      onChange={handleNewCustomerChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email <span className="text-red-500">*</span></label>
+                    <input
+                      type="email"
+                      name="email"
+                      id="email"
+                      value={newCustomer.email}
+                      onChange={handleNewCustomerChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
+                    <input
+                      type="text"
+                      name="phone"
+                      id="phone"
+                      value={newCustomer.phone}
+                      onChange={handleNewCustomerChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
+                    <select
+                      name="status"
+                      id="status"
+                      value={newCustomer.status}
+                      onChange={handleNewCustomerChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
                   </div>
                 </div>
               </div>
-              <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+              <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3">
                 <button
                   type="button"
+                  className="inline-flex w-full justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:text-sm"
                   onClick={handleAddCustomer}
-                  className="inline-flex w-full justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
                 >
                   Add Customer
                 </button>
                 <button
                   type="button"
+                  className="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:mt-0 sm:text-sm"
                   onClick={() => setShowAddModal(false)}
-                  className="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:mt-0 sm:w-auto sm:text-sm"
                 >
                   Cancel
                 </button>
@@ -368,95 +343,74 @@ export default function CustomersPage() {
       {showEditModal && currentCustomer && (
         <div className="fixed inset-0 z-10 overflow-y-auto">
           <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-            </div>
-
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={() => setShowEditModal(false)} />
             <span className="hidden sm:inline-block sm:h-screen sm:align-middle" aria-hidden="true">&#8203;</span>
-
-            <div className="inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div className="sm:flex sm:items-start">
-                  <div className="mt-3 w-full text-center sm:mt-0 sm:text-left">
-                    <h3 className="text-lg font-medium leading-6 text-gray-900">
-                      Edit Customer
-                    </h3>
-                    <div className="mt-4 space-y-4">
-                      <div>
-                        <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700">
-                          Name*
-                        </label>
-                        <input
-                          type="text"
-                          name="name"
-                          id="edit-name"
-                          value={currentCustomer.name}
-                          onChange={handleCurrentCustomerChange}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="edit-email" className="block text-sm font-medium text-gray-700">
-                          Email*
-                        </label>
-                        <input
-                          type="email"
-                          name="email"
-                          id="edit-email"
-                          value={currentCustomer.email}
-                          onChange={handleCurrentCustomerChange}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="edit-phone" className="block text-sm font-medium text-gray-700">
-                          Phone
-                        </label>
-                        <input
-                          type="tel"
-                          name="phone"
-                          id="edit-phone"
-                          value={currentCustomer.phone}
-                          onChange={handleCurrentCustomerChange}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="edit-status" className="block text-sm font-medium text-gray-700">
-                          Status
-                        </label>
-                        <select
-                          name="status"
-                          id="edit-status"
-                          value={currentCustomer.status}
-                          onChange={handleCurrentCustomerChange}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                        >
-                          <option value="active">Active</option>
-                          <option value="inactive">Inactive</option>
-                        </select>
-                      </div>
-                    </div>
+            <div className="inline-block transform overflow-hidden rounded-lg bg-white px-4 pt-5 pb-4 text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6 sm:align-middle">
+              <div>
+                <h3 className="text-lg font-medium leading-6 text-gray-900">Edit Customer</h3>
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700">Name <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      name="name"
+                      id="edit-name"
+                      value={currentCustomer.name}
+                      onChange={handleCurrentCustomerChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="edit-email" className="block text-sm font-medium text-gray-700">Email <span className="text-red-500">*</span></label>
+                    <input
+                      type="email"
+                      name="email"
+                      id="edit-email"
+                      value={currentCustomer.email}
+                      onChange={handleCurrentCustomerChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="edit-phone" className="block text-sm font-medium text-gray-700">Phone</label>
+                    <input
+                      type="text"
+                      name="phone"
+                      id="edit-phone"
+                      value={currentCustomer.phone}
+                      onChange={handleCurrentCustomerChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="edit-status" className="block text-sm font-medium text-gray-700">Status</label>
+                    <select
+                      name="status"
+                      id="edit-status"
+                      value={currentCustomer.status}
+                      onChange={handleCurrentCustomerChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
                   </div>
                 </div>
               </div>
-              <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+              <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3">
                 <button
                   type="button"
+                  className="inline-flex w-full justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:text-sm"
                   onClick={handleEditCustomer}
-                  className="inline-flex w-full justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
                 >
                   Save Changes
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setCurrentCustomer(null);
-                  }}
-                  className="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:mt-0 sm:w-auto sm:text-sm"
+                  className="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:mt-0 sm:text-sm"
+                  onClick={() => setShowEditModal(false)}
                 >
                   Cancel
                 </button>

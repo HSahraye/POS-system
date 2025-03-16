@@ -18,6 +18,7 @@ const poppins = Poppins({
 export const metadata = {
   title: 'Modern POS System',
   description: 'A powerful and modern point of sale system for your business',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0',
 };
 
 export default function RootLayout({
