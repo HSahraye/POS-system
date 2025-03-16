@@ -10,13 +10,19 @@ import orderRoutes from './routes/order.routes';
 import paymentRoutes from './routes/payment.routes';
 import { User, UserRole } from './models/User';
 import bcrypt from 'bcrypt';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
-const port = 5001; // Force port 5001
+const port = parseInt(process.env.PORT || '5001', 10);
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3010'],
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://your-frontend-domain.netlify.app'] 
+    : ['http://localhost:3000', 'http://localhost:3010'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
@@ -34,7 +40,11 @@ app.use('/api/payments', paymentRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date() });
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date(),
+    environment: process.env.NODE_ENV
+  });
 });
 
 // Create default admin user
@@ -70,8 +80,8 @@ const startServer = async () => {
     await createDefaultAdmin();
 
     // Start server
-    app.listen(port, () => {
-      console.log(`Server is running on port ${port}`);
+    app.listen(port, '0.0.0.0', () => {
+      console.log(`Server is running on port ${port} in ${process.env.NODE_ENV} mode`);
     });
   } catch (error) {
     console.error('Error starting server:', error);
