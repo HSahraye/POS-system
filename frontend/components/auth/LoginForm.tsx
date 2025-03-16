@@ -21,8 +21,9 @@ export default function LoginForm() {
     password: '',
   });
 
-  // Check for remembered user on component mount
+  // Check for remembered user and persistent data on component mount
   useEffect(() => {
+    // Check for remembered email
     const rememberedUser = localStorage.getItem('rememberedUser');
     if (rememberedUser) {
       setFormData(prev => ({
@@ -30,6 +31,20 @@ export default function LoginForm() {
         email: rememberedUser,
       }));
       setRememberMe(true);
+    }
+
+    // Check for persistent user data
+    const persistentData = localStorage.getItem('persistentUserData');
+    if (persistentData) {
+      try {
+        const userData = JSON.parse(persistentData);
+        setFormData(prev => ({
+          ...prev,
+          email: userData.email || prev.email,
+        }));
+      } catch (error) {
+        console.error('Error parsing persistent user data:', error);
+      }
     }
   }, []);
 
@@ -97,12 +112,16 @@ export default function LoginForm() {
       localStorage.setItem('token', token);
       
       // Store current user info
-      localStorage.setItem('currentUser', JSON.stringify({
+      const currentUserData = {
         id: user.id,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email
-      }));
+      };
+      localStorage.setItem('currentUser', JSON.stringify(currentUserData));
+      
+      // Also update persistent user data
+      localStorage.setItem('persistentUserData', JSON.stringify(currentUserData));
       
       // Store user info if remember me is checked
       if (rememberMe) {
