@@ -64,18 +64,25 @@ export default function DashboardLayout({
             const user = JSON.parse(userStr);
             setCurrentUser(user);
           } else {
-            // No user found, redirect to login
-            router.push('/login');
+            // No user found, create mock user
+            const mockUser = {
+              firstName: 'Demo',
+              lastName: 'User',
+              email: 'demo@example.com'
+            };
+            localStorage.setItem('currentUser', JSON.stringify(mockUser));
+            setCurrentUser(mockUser);
+            // Don't redirect to login in demo mode
           }
         } catch (error) {
           console.error('Error parsing user from localStorage:', error);
-          router.push('/login');
+          // Don't redirect to login in demo mode
         }
       }
     };
     
     checkUser();
-  }, [router]);
+  }, []);
 
   return (
     <div>

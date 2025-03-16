@@ -1,19 +1,9 @@
 {
   "name": "pos-system",
   "version": "1.0.0",
-  "description": "Point of Sale System",
+  "private": true,
   "scripts": {
-    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
-    "start:backend": "cd backend && npm run dev",
-    "start:frontend": "cd frontend && npm run dev",
-    "dev": "concurrently \"npm run start:backend\" \"npm run start:frontend\""
-  },
-  "devDependencies": {
-    "concurrently": "^8.2.2"
-  },
-  "dependencies": {
-    "chart.js": "^4.4.8",
-    "next": "^15.2.2",
-    "postcss-nesting": "^13.0.1"
+    "build": "cd frontend && npm install && npm run build",
+    "start": "cd frontend && npm start"
   }
 }
