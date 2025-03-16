@@ -4,7 +4,47 @@ import { useState } from 'react';
 import { Switch } from '@headlessui/react';
 import { cn } from '@/lib/utils';
 
-const settingsSections = [
+// Define interfaces for our settings
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
+interface BaseSetting {
+  id: string;
+  name: string;
+  description: string;
+  type: 'toggle' | 'select' | 'button';
+  defaultValue?: boolean | string;
+}
+
+interface ToggleSetting extends BaseSetting {
+  type: 'toggle';
+  defaultValue: boolean;
+}
+
+interface SelectSetting extends BaseSetting {
+  type: 'select';
+  options: SelectOption[];
+  defaultValue: string;
+}
+
+interface ButtonSetting extends BaseSetting {
+  type: 'button';
+  buttonText: string;
+  action: () => void;
+}
+
+type Setting = ToggleSetting | SelectSetting | ButtonSetting;
+
+interface SettingsSection {
+  id: string;
+  name: string;
+  description: string;
+  settings: Setting[];
+}
+
+const settingsSections: SettingsSection[] = [
   {
     id: 'account',
     name: 'Account Settings',
@@ -106,14 +146,24 @@ const settingsSections = [
   },
 ];
 
+// Add these helper functions for type guards
+const isToggleSetting = (setting: Setting): setting is ToggleSetting => 
+  setting.type === 'toggle';
+
+const isSelectSetting = (setting: Setting): setting is SelectSetting => 
+  setting.type === 'select';
+
+const isButtonSetting = (setting: Setting): setting is ButtonSetting => 
+  setting.type === 'button';
+
 export default function SettingsPage() {
   // Initialize state for all toggle settings
   const [toggleSettings, setToggleSettings] = useState<Record<string, boolean>>(() => {
     const initialState: Record<string, boolean> = {};
     settingsSections.forEach(section => {
       section.settings.forEach(setting => {
-        if (setting.type === 'toggle') {
-          initialState[setting.id] = setting.defaultValue as boolean;
+        if (isToggleSetting(setting)) {
+          initialState[setting.id] = setting.defaultValue;
         }
       });
     });
@@ -125,8 +175,8 @@ export default function SettingsPage() {
     const initialState: Record<string, string> = {};
     settingsSections.forEach(section => {
       section.settings.forEach(setting => {
-        if (setting.type === 'select') {
-          initialState[setting.id] = setting.defaultValue as string;
+        if (isSelectSetting(setting)) {
+          initialState[setting.id] = setting.defaultValue;
         }
       });
     });
@@ -173,7 +223,7 @@ export default function SettingsPage() {
                     <div className="mt-1 text-sm text-gray-500">{setting.description}</div>
                   </div>
                   <div className="ml-6 flex-shrink-0">
-                    {setting.type === 'toggle' && (
+                    {isToggleSetting(setting) && (
                       <Switch
                         checked={toggleSettings[setting.id]}
                         onChange={(checked) => handleToggleChange(setting.id, checked)}
@@ -192,7 +242,7 @@ export default function SettingsPage() {
                         />
                       </Switch>
                     )}
-                    {setting.type === 'select' && (
+                    {isSelectSetting(setting) && (
                       <select
                         id={setting.id}
                         name={setting.id}
@@ -200,14 +250,14 @@ export default function SettingsPage() {
                         value={selectSettings[setting.id]}
                         onChange={(e) => handleSelectChange(setting.id, e.target.value)}
                       >
-                        {setting.options?.map((option) => (
+                        {setting.options.map((option) => (
                           <option key={option.value} value={option.value}>
                             {option.label}
                           </option>
                         ))}
                       </select>
                     )}
-                    {setting.type === 'button' && (
+                    {isButtonSetting(setting) && (
                       <button
                         type="button"
                         className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-primary-600 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
