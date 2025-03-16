@@ -1,8 +1,8 @@
 # Use Node.js LTS version
 FROM node:18-alpine
 
-# Create app directory
-WORKDIR /usr/src/app
+# Set working directory
+WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
@@ -13,11 +13,11 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Build TypeScript code
+# Build TypeScript
 RUN npm run build
 
 # Expose port
-EXPOSE 5000
+EXPOSE 5001
 
-# Start the server
+# Start the application
 CMD ["npm", "start"] 
