@@ -1,260 +1,366 @@
 'use client';
 
-import { useState } from 'react';
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/20/solid';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect } from 'react';
+import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 
-// Sample events data
-const events = [
-  {
-    id: '1',
-    name: 'Team Meeting',
-    time: '9:00 AM - 10:00 AM',
-    date: '2023-03-15',
-    type: 'meeting',
-  },
-  {
-    id: '2',
-    name: 'Product Launch',
-    time: '2:00 PM - 4:00 PM',
-    date: '2023-03-15',
-    type: 'event',
-  },
-  {
-    id: '3',
-    name: 'Client Call',
-    time: '11:30 AM - 12:00 PM',
-    date: '2023-03-16',
-    type: 'call',
-  },
-  {
-    id: '4',
-    name: 'Marketing Review',
-    time: '1:00 PM - 2:00 PM',
-    date: '2023-03-17',
-    type: 'meeting',
-  },
-  {
-    id: '5',
-    name: 'Inventory Check',
-    time: '10:00 AM - 11:00 AM',
-    date: '2023-03-18',
-    type: 'task',
-  },
-  {
-    id: '6',
-    name: 'Sales Report Due',
-    time: '5:00 PM',
-    date: '2023-03-20',
-    type: 'deadline',
-  },
+// Event types with colors
+const eventTypes = [
+  { id: 'meeting', name: 'Meeting', color: 'bg-blue-100 text-blue-800' },
+  { id: 'event', name: 'Event', color: 'bg-green-100 text-green-800' },
+  { id: 'call', name: 'Call', color: 'bg-yellow-100 text-yellow-800' },
+  { id: 'task', name: 'Task', color: 'bg-purple-100 text-purple-800' },
+  { id: 'deadline', name: 'Deadline', color: 'bg-red-100 text-red-800' },
 ];
 
-const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const months = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
-];
-
-const eventTypeColors = {
-  meeting: 'bg-blue-100 text-blue-700',
-  event: 'bg-purple-100 text-purple-700',
-  call: 'bg-green-100 text-green-700',
-  task: 'bg-yellow-100 text-yellow-700',
-  deadline: 'bg-red-100 text-red-700',
-};
+// Interface for event
+interface Event {
+  id: string;
+  name: string;
+  time: string;
+  date: string;
+  type: string;
+}
 
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth();
-  
-  // Get the first day of the month
-  const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
-  const startingDayOfWeek = firstDayOfMonth.getDay();
-  
-  // Get the number of days in the month
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  
-  // Create calendar days array
-  const calendarDays = [];
-  
-  // Add empty cells for days before the first day of the month
-  for (let i = 0; i < startingDayOfWeek; i++) {
-    calendarDays.push(null);
-  }
-  
-  // Add days of the month
-  for (let day = 1; day <= daysInMonth; day++) {
-    const date = new Date(currentYear, currentMonth, day);
-    const dateString = date.toISOString().split('T')[0];
-    const dayEvents = events.filter(event => event.date === dateString);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [events, setEvents] = useState<Event[]>([]);
+  const [showAddEventModal, setShowAddEventModal] = useState(false);
+  const [newEvent, setNewEvent] = useState<Omit<Event, 'id'>>({
+    name: '',
+    time: '',
+    date: format(selectedDate, 'yyyy-MM-dd'),
+    type: 'meeting',
+  });
+
+  // Load events from localStorage on component mount
+  useEffect(() => {
+    const loadEvents = () => {
+      try {
+        const storedEvents = localStorage.getItem('calendarEvents');
+        if (storedEvents) {
+          setEvents(JSON.parse(storedEvents));
+        }
+      } catch (error) {
+        console.error('Error loading events from localStorage:', error);
+      }
+    };
     
-    calendarDays.push({
-      day,
-      date: dateString,
-      events: dayEvents,
-      isToday: dateString === new Date().toISOString().split('T')[0],
+    loadEvents();
+  }, []);
+
+  // Save events to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('calendarEvents', JSON.stringify(events));
+  }, [events]);
+
+  // Update new event date when selected date changes
+  useEffect(() => {
+    setNewEvent(prev => ({
+      ...prev,
+      date: format(selectedDate, 'yyyy-MM-dd'),
+    }));
+  }, [selectedDate]);
+
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  const handlePrevMonth = () => {
+    setCurrentDate(subMonths(currentDate, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentDate(addMonths(currentDate, 1));
+  };
+
+  const handleDateClick = (date: Date) => {
+    setSelectedDate(date);
+  };
+
+  const handleAddEvent = () => {
+    if (!newEvent.name || !newEvent.time) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    const event: Event = {
+      id: Date.now().toString(),
+      ...newEvent,
+    };
+
+    setEvents([...events, event]);
+    setShowAddEventModal(false);
+    setNewEvent({
+      name: '',
+      time: '',
+      date: format(selectedDate, 'yyyy-MM-dd'),
+      type: 'meeting',
     });
-  }
-  
-  // Get events for the selected date
-  const selectedDateEvents = events.filter(event => event.date === selectedDate);
-  
-  const goToPreviousMonth = () => {
-    setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
   };
-  
-  const goToNextMonth = () => {
-    setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
+
+  const handleDeleteEvent = (id: string) => {
+    setEvents(events.filter(event => event.id !== id));
   };
-  
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setNewEvent({
+      ...newEvent,
+      [name]: value,
+    });
+  };
+
+  // Generate calendar days
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
+  const calendarDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+  // Get events for a specific day
+  const getEventsForDay = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    return events.filter(event => event.date === dateStr);
+  };
+
+  // Get events for selected day
+  const selectedDayEvents = getEventsForDay(selectedDate);
+
+  // Get event type color
+  const getEventTypeColor = (type: string) => {
+    const eventType = eventTypes.find(t => t.id === type);
+    return eventType ? eventType.color : 'bg-gray-100 text-gray-800';
+  };
+
   return (
-    <div>
-      <div className="sm:flex sm:items-center">
-        <div className="sm:flex-auto">
-          <h1 className="text-base font-semibold leading-6 text-gray-900">Calendar</h1>
-          <p className="mt-2 text-sm text-gray-700">
-            View and manage your schedule, events, and appointments.
-          </p>
-        </div>
-        <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-          <button
-            type="button"
-            className="block rounded-md bg-primary-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-          >
-            <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5 inline-block" aria-hidden="true" />
-            Add event
-          </button>
-        </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-gray-900">Calendar</h1>
+        <button
+          onClick={() => setShowAddEventModal(true)}
+          className="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+        >
+          <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
+          Add Event
+        </button>
       </div>
-      
-      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Calendar */}
         <div className="lg:col-span-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">
-              {months[currentMonth]} {currentYear}
-            </h2>
-            <div className="flex space-x-2">
-              <button
-                type="button"
-                onClick={goToPreviousMonth}
-                className="rounded-md bg-white p-2 text-gray-400 hover:text-gray-500"
-              >
-                <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
-                <span className="sr-only">Previous month</span>
-              </button>
-              <button
-                type="button"
-                onClick={goToNextMonth}
-                className="rounded-md bg-white p-2 text-gray-400 hover:text-gray-500"
-              >
-                <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
-                <span className="sr-only">Next month</span>
-              </button>
-            </div>
-          </div>
-          
-          <div className="mt-4 grid grid-cols-7 gap-px overflow-hidden rounded-lg bg-gray-200 text-sm shadow">
-            {/* Day headers */}
-            {days.map((day) => (
-              <div key={day} className="bg-gray-50 py-2 text-center font-semibold text-gray-900">
-                {day}
-              </div>
-            ))}
-            
-            {/* Calendar days */}
-            {calendarDays.map((dayData, index) => (
-              <div
-                key={index}
-                className={`min-h-[100px] bg-white px-3 py-2 ${
-                  dayData?.isToday ? 'bg-primary-50' : ''
-                } ${
-                  dayData?.date === selectedDate ? 'ring-2 ring-primary-600' : ''
-                } ${
-                  dayData ? 'cursor-pointer hover:bg-gray-50' : ''
-                }`}
-                onClick={() => dayData && setSelectedDate(dayData.date)}
-              >
-                {dayData ? (
-                  <>
-                    <div className={`text-right font-semibold ${
-                      dayData.isToday ? 'text-primary-600' : 'text-gray-900'
-                    }`}>
-                      {dayData.day}
-                    </div>
-                    <div className="mt-2 space-y-1">
-                      {dayData.events.slice(0, 2).map((event) => (
-                        <div
-                          key={event.id}
-                          className={`truncate rounded px-1.5 py-0.5 text-xs ${
-                            eventTypeColors[event.type as keyof typeof eventTypeColors] || 'bg-gray-100 text-gray-700'
-                          }`}
-                        >
-                          {event.name}
-                        </div>
-                      ))}
-                      {dayData.events.length > 2 && (
-                        <div className="text-xs text-gray-500">
-                          +{dayData.events.length - 2} more
-                        </div>
-                      )}
-                    </div>
-                  </>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        {/* Selected day events */}
-        <div className="lg:col-span-1">
-          <div className="rounded-lg border border-gray-200 bg-white shadow">
-            <div className="border-b border-gray-200 px-4 py-5 sm:px-6">
-              <h3 className="text-base font-semibold leading-6 text-gray-900">
-                Events for {new Date(selectedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-              </h3>
-            </div>
-            <div className="px-4 py-5 sm:p-6">
-              {selectedDateEvents.length > 0 ? (
-                <ul className="divide-y divide-gray-200">
-                  {selectedDateEvents.map((event) => (
-                    <li key={event.id} className="py-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-900">{event.name}</h4>
-                          <p className="mt-1 text-sm text-gray-500">{event.time}</p>
-                        </div>
-                        <span
-                          className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${
-                            eventTypeColors[event.type as keyof typeof eventTypeColors] || 'bg-gray-100 text-gray-700'
-                          }`}
-                        >
-                          {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
-                        </span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-sm text-gray-500">No events scheduled for this day.</p>
+          <div className="overflow-hidden rounded-lg bg-white shadow">
+            <div className="p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {months[currentDate.getMonth()]} {currentDate.getFullYear()}
+                </h2>
+                <div className="flex space-x-2">
                   <button
-                    type="button"
-                    className="mt-4 inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                    onClick={handlePrevMonth}
+                    className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2 py-1 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
                   >
-                    <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
-                    Add event
+                    <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
+                  </button>
+                  <button
+                    onClick={handleNextMonth}
+                    className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2 py-1 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                  >
+                    <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
                   </button>
                 </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-7 gap-px">
+                {/* Day headers */}
+                {days.map((day) => (
+                  <div key={day} className="text-center text-sm font-medium text-gray-500">
+                    {day}
+                  </div>
+                ))}
+
+                {/* Calendar days */}
+                {calendarDays.map((day) => {
+                  const dayEvents = getEventsForDay(day);
+                  const isSelected = isSameDay(day, selectedDate);
+                  const isCurrentMonth = isSameMonth(day, currentDate);
+
+                  return (
+                    <div
+                      key={day.toString()}
+                      onClick={() => handleDateClick(day)}
+                      className={`
+                        min-h-[80px] cursor-pointer border border-gray-200 p-2
+                        ${isSelected ? 'bg-primary-50 border-primary-500' : ''}
+                        ${!isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''}
+                      `}
+                    >
+                      <div className="text-right text-sm">
+                        {format(day, 'd')}
+                      </div>
+                      <div className="mt-1 space-y-1">
+                        {dayEvents.slice(0, 2).map((event) => (
+                          <div
+                            key={event.id}
+                            className={`px-2 py-1 text-xs rounded-md truncate ${getEventTypeColor(event.type)}`}
+                          >
+                            {event.name}
+                          </div>
+                        ))}
+                        {dayEvents.length > 2 && (
+                          <div className="text-xs text-gray-500">
+                            +{dayEvents.length - 2} more
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Events for selected day */}
+        <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="p-6">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Events for {format(selectedDate, 'MMMM d, yyyy')}
+            </h2>
+            <div className="mt-6 space-y-4">
+              {selectedDayEvents.length === 0 ? (
+                <p className="text-gray-500">No events scheduled for this day.</p>
+              ) : (
+                selectedDayEvents.map((event) => (
+                  <div
+                    key={event.id}
+                    className="rounded-md border border-gray-200 p-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-base font-medium text-gray-900">{event.name}</h3>
+                      <span className={`px-2 py-1 text-xs rounded-md ${getEventTypeColor(event.type)}`}>
+                        {eventTypes.find(t => t.id === event.type)?.name || event.type}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm text-gray-500">{event.time}</p>
+                    <button
+                      onClick={() => handleDeleteEvent(event.id)}
+                      className="mt-2 text-sm text-red-600 hover:text-red-800"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))
               )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Add Event Modal */}
+      {showAddEventModal && (
+        <div className="fixed inset-0 z-10 overflow-y-auto">
+          <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+
+            <span className="hidden sm:inline-block sm:h-screen sm:align-middle" aria-hidden="true">&#8203;</span>
+
+            <div className="inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className="mt-3 w-full text-center sm:mt-0 sm:text-left">
+                    <h3 className="text-lg font-medium leading-6 text-gray-900">
+                      Add New Event
+                    </h3>
+                    <div className="mt-4 space-y-4">
+                      <div>
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                          Event Name*
+                        </label>
+                        <input
+                          type="text"
+                          name="name"
+                          id="name"
+                          value={newEvent.name}
+                          onChange={handleInputChange}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                          placeholder="Meeting with client"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="time" className="block text-sm font-medium text-gray-700">
+                          Time*
+                        </label>
+                        <input
+                          type="time"
+                          name="time"
+                          id="time"
+                          value={newEvent.time}
+                          onChange={handleInputChange}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="date" className="block text-sm font-medium text-gray-700">
+                          Date*
+                        </label>
+                        <input
+                          type="date"
+                          name="date"
+                          id="date"
+                          value={newEvent.date}
+                          onChange={handleInputChange}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="type" className="block text-sm font-medium text-gray-700">
+                          Event Type
+                        </label>
+                        <select
+                          name="type"
+                          id="type"
+                          value={newEvent.type}
+                          onChange={handleInputChange}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                        >
+                          {eventTypes.map((type) => (
+                            <option key={type.id} value={type.id}>
+                              {type.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                <button
+                  type="button"
+                  onClick={handleAddEvent}
+                  className="inline-flex w-full justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  Add Event
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddEventModal(false)}
+                  className="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:mt-0 sm:w-auto sm:text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

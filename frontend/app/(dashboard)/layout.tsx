@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useState } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { Dialog, Menu, Transition } from '@headlessui/react';
 import {
   Bars3Icon,
@@ -50,8 +50,32 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ firstName: string; lastName: string } | null>(null);
   const pathname = usePathname();
   const router = useRouter();
+
+  // Get current user from localStorage
+  useEffect(() => {
+    const checkUser = () => {
+      if (typeof window !== 'undefined') {
+        try {
+          const userStr = localStorage.getItem('currentUser');
+          if (userStr) {
+            const user = JSON.parse(userStr);
+            setCurrentUser(user);
+          } else {
+            // No user found, redirect to login
+            router.push('/login');
+          }
+        } catch (error) {
+          console.error('Error parsing user from localStorage:', error);
+          router.push('/login');
+        }
+      }
+    };
+    
+    checkUser();
+  }, [router]);
 
   return (
     <div>
@@ -295,7 +319,7 @@ export default function DashboardLayout({
                         className="ml-4 text-sm font-semibold leading-6 text-gray-900"
                         aria-hidden="true"
                       >
-                        John Smith
+                        {currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'User'}
                       </span>
                       <ChevronDownIcon
                         className="ml-2 h-5 w-5 text-gray-400"

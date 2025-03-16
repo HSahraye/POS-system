@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -11,6 +11,7 @@ export default function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -19,6 +20,18 @@ export default function LoginForm() {
     email: '',
     password: '',
   });
+
+  // Check for remembered user on component mount
+  useEffect(() => {
+    const rememberedUser = localStorage.getItem('rememberedUser');
+    if (rememberedUser) {
+      setFormData(prev => ({
+        ...prev,
+        email: rememberedUser,
+      }));
+      setRememberMe(true);
+    }
+  }, []);
 
   const validateForm = () => {
     const newErrors = {
@@ -38,9 +51,6 @@ export default function LoginForm() {
     if (!formData.password) {
       newErrors.password = 'Password is required';
       isValid = false;
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-      isValid = false;
     }
 
     setErrors(newErrors);
@@ -57,23 +67,49 @@ export default function LoginForm() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5001/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+      // Get users from localStorage
+      let users = [];
+      try {
+        const storedUsers = localStorage.getItem('users');
+        users = storedUsers ? JSON.parse(storedUsers) : [];
+        
+        // Validate that users is an array
+        if (!Array.isArray(users)) {
+          console.error('Stored users is not an array:', users);
+          users = [];
+        }
+      } catch (error) {
+        console.error('Error parsing users from localStorage:', error);
+        users = [];
       }
-
-      // Store the token
-      localStorage.setItem('token', data.token);
+      
+      // Find user with matching email and password
+      const user = users.find(
+        (u: any) => u.email === formData.email && u.password === formData.password
+      );
+      
+      if (!user) {
+        throw new Error('Invalid email or password');
+      }
+      
+      // Generate a mock token
+      const token = `token_${Math.random().toString(36).substring(2, 15)}`;
+      localStorage.setItem('token', token);
+      
+      // Store current user info
+      localStorage.setItem('currentUser', JSON.stringify({
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email
+      }));
+      
+      // Store user info if remember me is checked
+      if (rememberMe) {
+        localStorage.setItem('rememberedUser', formData.email);
+      } else {
+        localStorage.removeItem('rememberedUser');
+      }
       
       // Show success message
       toast.success('Login successful!');
@@ -154,6 +190,8 @@ export default function LoginForm() {
             id="remember-me"
             name="remember-me"
             type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
             className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
           />
           <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-600">

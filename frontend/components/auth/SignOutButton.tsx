@@ -17,9 +17,12 @@ export default function SignOutButton({
   const router = useRouter();
 
   const handleSignOut = () => {
-    // Remove the authentication token from localStorage
+    // Remove all authentication and user data from localStorage
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
+      localStorage.removeItem('currentUser');
+      // Keep rememberedUser if it exists for convenience
+      
       // Use window.location for a full page refresh to ensure clean state
       window.location.href = '/login';
     }

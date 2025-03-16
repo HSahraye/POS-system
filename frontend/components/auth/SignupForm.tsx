@@ -73,23 +73,52 @@ export default function SignupForm() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5001/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
+      // Check if user already exists in localStorage
+      let users = [];
+      try {
+        const storedUsers = localStorage.getItem('users');
+        users = storedUsers ? JSON.parse(storedUsers) : [];
+        
+        // Validate that users is an array
+        if (!Array.isArray(users)) {
+          console.error('Stored users is not an array:', users);
+          users = [];
+        }
+      } catch (error) {
+        console.error('Error parsing users from localStorage:', error);
+        users = [];
       }
-
-      toast.success('Registration successful! Please log in.');
-      router.push('/');
+      
+      const userExists = users.some((user: any) => user.email === formData.email);
+      
+      if (userExists) {
+        throw new Error('User with this email already exists');
+      }
+      
+      // Add new user to localStorage
+      const newUser = {
+        id: Date.now().toString(),
+        ...formData,
+        createdAt: new Date().toISOString(),
+      };
+      
+      users.push(newUser);
+      localStorage.setItem('users', JSON.stringify(users));
+      
+      // Generate a mock token
+      const token = `token_${Math.random().toString(36).substring(2, 15)}`;
+      localStorage.setItem('token', token);
+      
+      // Store current user info
+      localStorage.setItem('currentUser', JSON.stringify({
+        id: newUser.id,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        email: newUser.email
+      }));
+      
+      toast.success('Registration successful!');
+      router.push('/dashboard');
     } catch (error: any) {
       console.error('Registration error:', error);
       toast.error(error.message || 'Registration failed');
@@ -203,7 +232,7 @@ export default function SignupForm() {
 
       <div className="mt-6 text-center text-sm">
         <span className="text-gray-600">Already have an account?</span>{' '}
-        <a href="/" className="font-medium text-primary-600 hover:text-primary-500">
+        <a href="/login" className="font-medium text-primary-600 hover:text-primary-500">
           Sign in
         </a>
       </div>
