@@ -30,7 +30,7 @@ import SignOutButton from '@/components/auth/SignOutButton';
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   { name: 'Orders', href: '/dashboard/orders', icon: DocumentDuplicateIcon },
-  { name: 'Products', href: '/dashboard/products', icon: FolderIcon },
+  { name: 'Inventory', href: '/dashboard/inventory', icon: FolderIcon },
   { name: 'Customers', href: '/dashboard/customers', icon: UsersIcon },
   { name: 'Reports', href: '/dashboard/reports', icon: ChartPieIcon },
   { name: 'Analytics', href: '/dashboard/analytics', icon: ChartBarIcon },

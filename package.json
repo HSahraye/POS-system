@@ -12,6 +12,7 @@
     "concurrently": "^8.2.2"
   },
   "dependencies": {
+    "chart.js": "^4.4.8",
     "next": "^15.2.2",
     "postcss-nesting": "^13.0.1"
   }

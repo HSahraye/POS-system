@@ -5,174 +5,126 @@ import {
   PlusIcon, 
   MagnifyingGlassIcon, 
   PencilIcon, 
-  TrashIcon, 
-  CheckCircleIcon,
-  ClockIcon,
-  ArrowPathIcon,
-  XCircleIcon
+  TrashIcon,
+  ExclamationCircleIcon
 } from '@heroicons/react/24/outline';
-import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-import { mockOrders, mockCustomers, Order, formatDateTime } from '../mockData';
+import { mockInventory, InventoryItem, formatCurrency, formatDate } from '../mockData';
 
-// Order status types
-type OrderStatus = 'Completed' | 'Pending' | 'Processing' | 'Cancelled';
-
-export default function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
+export default function InventoryPage() {
+  const [inventory, setInventory] = useState<InventoryItem[]>(mockInventory);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
-  const [newOrder, setNewOrder] = useState<Omit<Order, 'id'>>({
-    customer: '',
-    date: format(new Date(), 'yyyy-MM-dd\'T\'HH:mm'),
-    items: 1,
-    amount: 0,
-    status: 'Pending'
+  const [currentItem, setCurrentItem] = useState<InventoryItem | null>(null);
+  const [newItem, setNewItem] = useState<Omit<InventoryItem, 'id'>>({
+    name: '',
+    category: '',
+    price: 0,
+    stock: 0,
+    reorderPoint: 0,
+    supplier: '',
+    lastRestocked: new Date().toISOString().split('T')[0]
   });
 
-  // Load orders from localStorage on component mount
+  // Load inventory from localStorage on component mount
   useEffect(() => {
     try {
-      const storedOrders = localStorage.getItem('orders');
-      if (storedOrders) {
-        setOrders(JSON.parse(storedOrders));
+      const storedInventory = localStorage.getItem('inventory');
+      if (storedInventory) {
+        setInventory(JSON.parse(storedInventory));
       }
     } catch (error) {
-      console.error('Error loading orders:', error);
+      console.error('Error loading inventory:', error);
     }
   }, []);
 
-  // Save orders to localStorage whenever they change
+  // Save inventory to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('orders', JSON.stringify(orders));
-  }, [orders]);
+    localStorage.setItem('inventory', JSON.stringify(inventory));
+  }, [inventory]);
 
-  // Filter orders based on search term
-  const filteredOrders = orders.filter(order => 
-    order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.id.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter inventory based on search term
+  const filteredInventory = inventory.filter(item => 
+    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.supplier.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Handle adding a new order
-  const handleAddOrder = () => {
-    if (!newOrder.customer || newOrder.amount <= 0) {
+  // Handle adding a new item
+  const handleAddItem = () => {
+    if (!newItem.name || !newItem.category || newItem.price <= 0) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    const order: Order = {
-      id: `#${orders.length + 1}`,
-      ...newOrder,
+    const item: InventoryItem = {
+      id: `${inventory.length + 1}`,
+      ...newItem,
     };
 
-    setOrders([...orders, order]);
+    setInventory([...inventory, item]);
     setShowAddModal(false);
-    setNewOrder({
-      customer: '',
-      date: format(new Date(), 'yyyy-MM-dd\'T\'HH:mm'),
-      items: 1,
-      amount: 0,
-      status: 'Pending'
+    setNewItem({
+      name: '',
+      category: '',
+      price: 0,
+      stock: 0,
+      reorderPoint: 0,
+      supplier: '',
+      lastRestocked: new Date().toISOString().split('T')[0]
     });
-    toast.success('Order added successfully!');
+    toast.success('Item added successfully!');
   };
 
-  // Handle editing an order
-  const handleEditOrder = () => {
-    if (!currentOrder) return;
+  // Handle editing an item
+  const handleEditItem = () => {
+    if (!currentItem) return;
     
-    const updatedOrders = orders.map(order => 
-      order.id === currentOrder.id ? currentOrder : order
+    const updatedInventory = inventory.map(item => 
+      item.id === currentItem.id ? currentItem : item
     );
     
-    setOrders(updatedOrders);
+    setInventory(updatedInventory);
     setShowEditModal(false);
-    setCurrentOrder(null);
-    toast.success('Order updated successfully!');
+    setCurrentItem(null);
+    toast.success('Item updated successfully!');
   };
 
-  // Handle deleting an order
-  const handleDeleteOrder = (id: string) => {
-    const updatedOrders = orders.filter(order => order.id !== id);
-    setOrders(updatedOrders);
-    toast.success('Order removed successfully!');
+  // Handle deleting an item
+  const handleDeleteItem = (id: string) => {
+    const updatedInventory = inventory.filter(item => item.id !== id);
+    setInventory(updatedInventory);
+    toast.success('Item removed successfully!');
   };
 
-  // Handle input change for new order
-  const handleNewOrderChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  // Handle input change for new item
+  const handleNewItemChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setNewOrder({
-      ...newOrder,
-      [name]: name === 'items' || name === 'amount' ? parseFloat(value) : value,
+    setNewItem({
+      ...newItem,
+      [name]: ['price', 'stock', 'reorderPoint'].includes(name) ? parseFloat(value) : value,
     });
   };
 
-  // Handle input change for current order
-  const handleCurrentOrderChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    if (!currentOrder) return;
+  // Handle input change for current item
+  const handleCurrentItemChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    if (!currentItem) return;
     
     const { name, value } = e.target;
-    setCurrentOrder({
-      ...currentOrder,
-      [name]: name === 'items' || name === 'amount' ? parseFloat(value) : value,
+    setCurrentItem({
+      ...currentItem,
+      [name]: ['price', 'stock', 'reorderPoint'].includes(name) ? parseFloat(value) : value,
     });
-  };
-
-  // Get status badge based on order status
-  const getStatusBadge = (status: Order['status']) => {
-    switch (status) {
-      case 'Completed':
-        return (
-          <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-            <CheckCircleIcon className="-ml-0.5 mr-1.5 h-4 w-4 text-green-500" />
-            Completed
-          </span>
-        );
-      case 'Pending':
-        return (
-          <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
-            <ClockIcon className="-ml-0.5 mr-1.5 h-4 w-4 text-yellow-500" />
-            Pending
-          </span>
-        );
-      case 'Processing':
-        return (
-          <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
-            <ArrowPathIcon className="-ml-0.5 mr-1.5 h-4 w-4 text-blue-500" />
-            Processing
-          </span>
-        );
-      case 'Cancelled':
-        return (
-          <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
-            <XCircleIcon className="-ml-0.5 mr-1.5 h-4 w-4 text-red-500" />
-            Cancelled
-          </span>
-        );
-      default:
-        return null;
-    }
-  };
-
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return format(date, 'MMM d, yyyy, h:mm a');
-    } catch (error) {
-      return dateString;
-    }
   };
 
   return (
     <div className="space-y-6">
       <div className="sm:flex sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Orders</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Inventory</h1>
           <p className="mt-2 text-sm text-gray-700">
-            A list of all orders in your store including customer name, order ID, date, and status.
+            Manage your product inventory, stock levels, and suppliers.
           </p>
         </div>
         <div className="mt-4 sm:mt-0">
@@ -181,7 +133,7 @@ export default function OrdersPage() {
             className="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
           >
             <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
-            Add order
+            Add item
           </button>
         </div>
       </div>
@@ -198,32 +150,32 @@ export default function OrdersPage() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="block w-full rounded-md border-0 py-2 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
-          placeholder="Search orders..."
+          placeholder="Search inventory..."
         />
       </div>
 
-      {/* Orders Table */}
+      {/* Inventory Table */}
       <div className="overflow-hidden rounded-lg border border-gray-200 shadow">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Order ID
+                Product
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Customer
+                Category
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Date
+                Price
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Items
+                Stock
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Amount
+                Supplier
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Status
+                Last Restocked
               </th>
               <th scope="col" className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                 Actions
@@ -231,31 +183,46 @@ export default function OrdersPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
-            {filteredOrders.length > 0 ? (
-              filteredOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50">
-                  <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                    {order.id}
+            {filteredInventory.length > 0 ? (
+              filteredInventory.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50">
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <div className="flex items-center">
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">{item.name}</div>
+                        {item.stock <= item.reorderPoint && (
+                          <div className="text-xs text-red-600 flex items-center mt-1">
+                            <ExclamationCircleIcon className="h-4 w-4 mr-1" />
+                            Low stock
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                    {order.customer}
+                    {item.category}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                    {formatDate(order.date)}
+                    {formatCurrency(item.price)}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                    {order.items}
+                    <span className={`${
+                      item.stock <= item.reorderPoint ? 'text-red-600' : 'text-gray-900'
+                    }`}>
+                      {item.stock}
+                    </span>
+                    <span className="text-xs text-gray-500 ml-1">/ {item.reorderPoint} min</span>
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                    ${order.amount.toFixed(2)}
+                    {item.supplier}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                    {getStatusBadge(order.status)}
+                    {formatDate(item.lastRestocked)}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                     <button
                       onClick={() => {
-                        setCurrentOrder(order);
+                        setCurrentItem(item);
                         setShowEditModal(true);
                       }}
                       className="mr-3 text-primary-600 hover:text-primary-900"
@@ -264,7 +231,7 @@ export default function OrdersPage() {
                       <span className="sr-only">Edit</span>
                     </button>
                     <button
-                      onClick={() => handleDeleteOrder(order.id)}
+                      onClick={() => handleDeleteItem(item.id)}
                       className="text-red-600 hover:text-red-900"
                     >
                       <TrashIcon className="h-5 w-5" aria-hidden="true" />
@@ -276,7 +243,7 @@ export default function OrdersPage() {
             ) : (
               <tr>
                 <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
-                  No orders found. {searchTerm ? 'Try a different search term.' : 'Add your first order!'}
+                  No items found. {searchTerm ? 'Try a different search term.' : 'Add your first item!'}
                 </td>
               </tr>
             )}
@@ -284,7 +251,7 @@ export default function OrdersPage() {
         </table>
       </div>
 
-      {/* Add Order Modal */}
+      {/* Add Item Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-10 overflow-y-auto">
           <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
@@ -299,85 +266,96 @@ export default function OrdersPage() {
                 <div className="sm:flex sm:items-start">
                   <div className="mt-3 w-full text-center sm:mt-0 sm:text-left">
                     <h3 className="text-lg font-medium leading-6 text-gray-900">
-                      Add New Order
+                      Add New Item
                     </h3>
                     <div className="mt-4 space-y-4">
                       <div>
-                        <label htmlFor="customer" className="block text-sm font-medium text-gray-700">
-                          Customer Name*
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                          Product Name*
                         </label>
                         <input
                           type="text"
-                          name="customer"
-                          id="customer"
-                          value={newOrder.customer}
-                          onChange={handleNewOrderChange}
+                          name="name"
+                          id="name"
+                          value={newItem.name}
+                          onChange={handleNewItemChange}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                          placeholder="Customer name"
                           required
                         />
                       </div>
                       <div>
-                        <label htmlFor="date" className="block text-sm font-medium text-gray-700">
-                          Date and Time*
+                        <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+                          Category*
                         </label>
                         <input
-                          type="datetime-local"
-                          name="date"
-                          id="date"
-                          value={newOrder.date}
-                          onChange={handleNewOrderChange}
+                          type="text"
+                          name="category"
+                          id="category"
+                          value={newItem.category}
+                          onChange={handleNewItemChange}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                           required
                         />
                       </div>
                       <div>
-                        <label htmlFor="items" className="block text-sm font-medium text-gray-700">
-                          Number of Items*
-                        </label>
-                        <input
-                          type="number"
-                          name="items"
-                          id="items"
-                          min="1"
-                          value={newOrder.items}
-                          onChange={handleNewOrderChange}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
-                          Amount ($)*
+                        <label htmlFor="price" className="block text-sm font-medium text-gray-700">
+                          Price*
                         </label>
                         <input
                           type="number"
-                          name="amount"
-                          id="amount"
+                          name="price"
+                          id="price"
                           min="0.01"
                           step="0.01"
-                          value={newOrder.amount}
-                          onChange={handleNewOrderChange}
+                          value={newItem.price}
+                          onChange={handleNewItemChange}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                           required
                         />
                       </div>
                       <div>
-                        <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-                          Status
+                        <label htmlFor="stock" className="block text-sm font-medium text-gray-700">
+                          Stock*
                         </label>
-                        <select
-                          name="status"
-                          id="status"
-                          value={newOrder.status}
-                          onChange={handleNewOrderChange}
+                        <input
+                          type="number"
+                          name="stock"
+                          id="stock"
+                          min="0"
+                          value={newItem.stock}
+                          onChange={handleNewItemChange}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                        >
-                          <option value="Pending">Pending</option>
-                          <option value="Processing">Processing</option>
-                          <option value="Completed">Completed</option>
-                          <option value="Cancelled">Cancelled</option>
-                        </select>
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="reorderPoint" className="block text-sm font-medium text-gray-700">
+                          Reorder Point*
+                        </label>
+                        <input
+                          type="number"
+                          name="reorderPoint"
+                          id="reorderPoint"
+                          min="0"
+                          value={newItem.reorderPoint}
+                          onChange={handleNewItemChange}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="supplier" className="block text-sm font-medium text-gray-700">
+                          Supplier*
+                        </label>
+                        <input
+                          type="text"
+                          name="supplier"
+                          id="supplier"
+                          value={newItem.supplier}
+                          onChange={handleNewItemChange}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                          required
+                        />
                       </div>
                     </div>
                   </div>
@@ -386,10 +364,10 @@ export default function OrdersPage() {
               <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                 <button
                   type="button"
-                  onClick={handleAddOrder}
+                  onClick={handleAddItem}
                   className="inline-flex w-full justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
                 >
-                  Add Order
+                  Add Item
                 </button>
                 <button
                   type="button"
@@ -404,8 +382,8 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {/* Edit Order Modal */}
-      {showEditModal && currentOrder && (
+      {/* Edit Item Modal */}
+      {showEditModal && currentItem && (
         <div className="fixed inset-0 z-10 overflow-y-auto">
           <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             <div className="fixed inset-0 transition-opacity" aria-hidden="true">
@@ -419,85 +397,96 @@ export default function OrdersPage() {
                 <div className="sm:flex sm:items-start">
                   <div className="mt-3 w-full text-center sm:mt-0 sm:text-left">
                     <h3 className="text-lg font-medium leading-6 text-gray-900">
-                      Edit Order {currentOrder.id}
+                      Edit Item
                     </h3>
                     <div className="mt-4 space-y-4">
                       <div>
-                        <label htmlFor="edit-customer" className="block text-sm font-medium text-gray-700">
-                          Customer Name*
+                        <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700">
+                          Product Name*
                         </label>
                         <input
                           type="text"
-                          name="customer"
-                          id="edit-customer"
-                          value={currentOrder.customer}
-                          onChange={handleCurrentOrderChange}
+                          name="name"
+                          id="edit-name"
+                          value={currentItem.name}
+                          onChange={handleCurrentItemChange}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                          placeholder="Customer name"
                           required
                         />
                       </div>
                       <div>
-                        <label htmlFor="edit-date" className="block text-sm font-medium text-gray-700">
-                          Date and Time*
+                        <label htmlFor="edit-category" className="block text-sm font-medium text-gray-700">
+                          Category*
                         </label>
                         <input
-                          type="datetime-local"
-                          name="date"
-                          id="edit-date"
-                          value={currentOrder.date}
-                          onChange={handleCurrentOrderChange}
+                          type="text"
+                          name="category"
+                          id="edit-category"
+                          value={currentItem.category}
+                          onChange={handleCurrentItemChange}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                           required
                         />
                       </div>
                       <div>
-                        <label htmlFor="edit-items" className="block text-sm font-medium text-gray-700">
-                          Number of Items*
-                        </label>
-                        <input
-                          type="number"
-                          name="items"
-                          id="edit-items"
-                          min="1"
-                          value={currentOrder.items}
-                          onChange={handleCurrentOrderChange}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="edit-amount" className="block text-sm font-medium text-gray-700">
-                          Amount ($)*
+                        <label htmlFor="edit-price" className="block text-sm font-medium text-gray-700">
+                          Price*
                         </label>
                         <input
                           type="number"
-                          name="amount"
-                          id="edit-amount"
+                          name="price"
+                          id="edit-price"
                           min="0.01"
                           step="0.01"
-                          value={currentOrder.amount}
-                          onChange={handleCurrentOrderChange}
+                          value={currentItem.price}
+                          onChange={handleCurrentItemChange}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                           required
                         />
                       </div>
                       <div>
-                        <label htmlFor="edit-status" className="block text-sm font-medium text-gray-700">
-                          Status
+                        <label htmlFor="edit-stock" className="block text-sm font-medium text-gray-700">
+                          Stock*
                         </label>
-                        <select
-                          name="status"
-                          id="edit-status"
-                          value={currentOrder.status}
-                          onChange={handleCurrentOrderChange}
+                        <input
+                          type="number"
+                          name="stock"
+                          id="edit-stock"
+                          min="0"
+                          value={currentItem.stock}
+                          onChange={handleCurrentItemChange}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                        >
-                          <option value="Pending">Pending</option>
-                          <option value="Processing">Processing</option>
-                          <option value="Completed">Completed</option>
-                          <option value="Cancelled">Cancelled</option>
-                        </select>
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="edit-reorderPoint" className="block text-sm font-medium text-gray-700">
+                          Reorder Point*
+                        </label>
+                        <input
+                          type="number"
+                          name="reorderPoint"
+                          id="edit-reorderPoint"
+                          min="0"
+                          value={currentItem.reorderPoint}
+                          onChange={handleCurrentItemChange}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="edit-supplier" className="block text-sm font-medium text-gray-700">
+                          Supplier*
+                        </label>
+                        <input
+                          type="text"
+                          name="supplier"
+                          id="edit-supplier"
+                          value={currentItem.supplier}
+                          onChange={handleCurrentItemChange}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                          required
+                        />
                       </div>
                     </div>
                   </div>
@@ -506,7 +495,7 @@ export default function OrdersPage() {
               <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                 <button
                   type="button"
-                  onClick={handleEditOrder}
+                  onClick={handleEditItem}
                   className="inline-flex w-full justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
                 >
                   Save Changes
@@ -515,7 +504,7 @@ export default function OrdersPage() {
                   type="button"
                   onClick={() => {
                     setShowEditModal(false);
-                    setCurrentOrder(null);
+                    setCurrentItem(null);
                   }}
                   className="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:mt-0 sm:w-auto sm:text-sm"
                 >
