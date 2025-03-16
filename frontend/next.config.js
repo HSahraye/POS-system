@@ -8,6 +8,11 @@ const nextConfig = {
   output: 'export',
   distDir: '.next',
   trailingSlash: true,
+  webpack: (config) => {
+    // Add a rule to handle recharts
+    config.externals = [...(config.externals || []), 'canvas', 'jsdom'];
+    return config;
+  },
 }
 
 module.exports = nextConfig 
