@@ -4,8 +4,8 @@
   "description": "POS System Backend",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
-    "postinstall": "tsc",
+    "build": "tsc --project tsconfig.json",
+    "postinstall": "npm run build",
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "typeorm": "typeorm-ts-node-commonjs -d typeorm.config.ts",

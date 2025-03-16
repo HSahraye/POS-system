@@ -9,18 +9,20 @@ WORKDIR /usr/src/app
 
 # Copy package files first for better caching
 COPY package*.json ./
+COPY tsconfig.json ./
 
 # Install dependencies
+RUN npm install -g typescript
 RUN npm install
 
 # Copy the rest of the application
 COPY . .
 
-# Create dist directory and ensure correct permissions
-RUN mkdir -p dist && chmod -R 777 dist
+# Create dist directory
+RUN mkdir -p dist
 
 # Build TypeScript
-RUN npm run build
+RUN npx tsc
 
 # Expose port
 EXPOSE 5001
