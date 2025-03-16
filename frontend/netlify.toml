@@ -1,3 +1,6 @@
+# This file is not used in deployment.
+# The root netlify.toml takes precedence.
+
 [build]
   base = "frontend"
   command = "npm run build"

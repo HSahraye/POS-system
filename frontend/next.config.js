@@ -5,7 +5,9 @@ const nextConfig = {
     domains: ['localhost', 'images.unsplash.com'],
     unoptimized: true,
   },
-  output: 'standalone',
+  output: 'export',
+  distDir: '.next',
+  trailingSlash: true,
 }
 
 module.exports = nextConfig 

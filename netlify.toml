@@ -1,7 +1,17 @@
 [build]
-  base = "frontend"
-  command = "npm run build"
-  publish = ".next"
+  command = "cd frontend && npm install && npm run build"
+  publish = "frontend/.next"
+
+[build.environment]
+  NODE_VERSION = "18"
+  NEXT_USE_NETLIFY_EDGE = "true"
+  NEXT_TELEMETRY_DISABLED = "1"
 
 [[plugins]]
-  package = "@netlify/plugin-nextjs" 
+  package = "@netlify/plugin-nextjs"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block" 
